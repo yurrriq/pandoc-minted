@@ -12,7 +12,7 @@ let
         isLibrary = false;
         isExecutable = true;
         executableHaskellDepends = [ base pandoc pandoc-types ];
-        homepage = "https://github.com/yurrriq/pandoc-minted";
+        homepage = "https://github.com/yurrriq/pandoc-minted#readme";
         description = "A pandoc filter to render LaTeX code blocks using minted";
         license = stdenv.lib.licenses.mit;
       };

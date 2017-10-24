@@ -15,13 +15,13 @@ Source
 
 As usual, declare a `module Main`...
 
-``` sourceCode
+```haskell
 module Main where
 ```
 
 ... and `import` some useful definitions, in this case, `intercalate` from `Data.List`, `topDown` from `Text.Pandoc.Generic` and everything from `Text.Pandoc.JSON`.
 
-``` sourceCode
+```haskell
 import           Data.List           (intercalate)
 import           Text.Pandoc.Generic (topDown)
 import           Text.Pandoc.JSON
@@ -29,13 +29,13 @@ import           Text.Pandoc.JSON
 
 Define a data type `Minted` to more expressively handle inline code and code blocks.
 
-``` sourceCode
+```haskell
 data Minted
   = MintedInline (String, String) String
   | MintedBlock (String, String) String
 ```
 
-``` sourceCode
+```haskell
 instance Show Minted where
   show (MintedInline (attrs, language) contents) =
     "\\mintinline[" ++ attrs ++ "]{" ++ language ++ "}{" ++ contents ++ "}"
@@ -46,18 +46,18 @@ instance Show Minted where
             ]
 ```
 
-``` sourceCode
+```haskell
 main :: IO ()
 main = toJSONFilter minted
 ```
 
-``` sourceCode
+```haskell
 minted :: Pandoc -> Pandoc
 minted = topDown (concatMap mintinline) .
          topDown (concatMap mintedBlock)
 ```
 
-``` sourceCode
+```haskell
 mintinline :: Inline -> [Inline]
 mintinline (Code attr contents) =
   let
@@ -67,7 +67,7 @@ mintinline (Code attr contents) =
 mintinline x = [x]
 ```
 
-``` sourceCode
+```haskell
 mintedBlock :: Block -> [Block]
 mintedBlock (CodeBlock attr contents) =
   let
@@ -77,7 +77,7 @@ mintedBlock (CodeBlock attr contents) =
 mintedBlock x = [x]
 ```
 
-``` sourceCode
+```haskell
 unpackCode :: Attr -> String -> (String, String)
 unpackCode (_, [], kvs) defaultLanguage =
   (unpackAttrs kvs, defaultLanguage)
@@ -87,7 +87,7 @@ unpackCode (_, language : _, kvs) _ =
   (unpackAttrs kvs, language)
 ```
 
-``` sourceCode
+```haskell
 unpackAttrs :: [(String, String)] -> String
 unpackAttrs kvs = intercalate ", " [ k ++ "=" ++ v  | (k, v) <- kvs ]
 ```

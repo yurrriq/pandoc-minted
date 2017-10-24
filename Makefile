@@ -22,6 +22,7 @@ install: result/bin/pandoc-minted
 
 README.md: Main.lhs
 	${pandoc} ${pandoc_flags} -o $@ $<
+	sed -i 's|``` sourceCode|```haskell|' $@
 
 
 default.nix: pandoc-minted.cabal
