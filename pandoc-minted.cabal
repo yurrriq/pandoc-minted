@@ -1,0 +1,31 @@
+-- This file has been generated from package.yaml by hpack version 0.18.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           pandoc-minted
+version:        0.0.1.0
+synopsis:       A pandoc filter to render LaTeX code blocks using minted
+category:       Text
+homepage:       https://github.com/yurrriq/pandoc-minted#readme
+bug-reports:    https://github.com/yurrriq/pandoc-minted/issues
+author:         Eric Bailey
+maintainer:     eric@ericb.me
+license:        MIT
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+
+extra-source-files:
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/yurrriq/pandoc-minted
+
+executable pandoc-minted
+  main-is: Main.lhs
+  build-depends:
+      base >=4.9 && <4.10
+    , pandoc
+    , pandoc-types
+  default-language: Haskell2010
