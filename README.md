@@ -19,21 +19,39 @@ As usual, declare a `module Main`...
 module Main where
 ```
 
-... and `import` some useful definitions, in this case, `intercalate` from `Data.List`, `topDown` from `Text.Pandoc.Generic` and everything from `Text.Pandoc.JSON`.
+... and `import` some useful definitions:
+
+-   `intercalate` from `Data.List`,
 
 ```haskell
 import           Data.List           (intercalate)
+```
+
+-   `topDown` from `Text.Pandoc.Generic`,
+
+```haskell
 import           Text.Pandoc.Generic (topDown)
+```
+
+-   and everything from `Text.Pandoc.JSON`.
+
+```haskell
 import           Text.Pandoc.JSON
 ```
 
-Define a data type `Minted` to more expressively handle inline code and code blocks.
+### The `Minted` Data Type
+
+Define a data type `Minted` to more expressively handle [inline code](#mintinline) and [code blocks](#mintedBlock).
+
+<a name="Minted" />
 
 ```haskell
 data Minted
   = MintedInline (String, String) String
   | MintedBlock (String, String) String
 ```
+
+Define a `Show` instance for `Minted`, in order to generate LaTeX code.
 
 ```haskell
 instance Show Minted where
@@ -46,16 +64,30 @@ instance Show Minted where
             ]
 ```
 
+### The `main` Function
+
+Run [`minted`](#minted) as a JSON filter.
+
+<a name="main" />
+
 ```haskell
 main :: IO ()
 main = toJSONFilter minted
 ```
+
+<a name="minted" />
 
 ```haskell
 minted :: Pandoc -> Pandoc
 minted = topDown (concatMap mintinline) .
          topDown (concatMap mintedBlock)
 ```
+
+### Handle Inline Code
+
+Transform a `Code` into a `\mintinline` call, otherwise return a given `Inline`.
+
+<a name="mintinline" />
 
 ```haskell
 mintinline :: Inline -> [Inline]
@@ -67,6 +99,12 @@ mintinline (Code attr contents) =
 mintinline x = [x]
 ```
 
+### Handle Code Blocks
+
+Transform a `CodeBlock` into a `minted` environment, otherwise return a given `Block`.
+
+<a name="mintedBlock" />
+
 ```haskell
 mintedBlock :: Block -> [Block]
 mintedBlock (CodeBlock attr contents) =
@@ -77,6 +115,10 @@ mintedBlock (CodeBlock attr contents) =
 mintedBlock x = [x]
 ```
 
+### Helper Functions
+
+Given a triplet of `Attr`ibutes (identifier, language(s), and key/value pairs) and a default language, return a pair of `minted` attributes and language.
+
 ```haskell
 unpackCode :: Attr -> String -> (String, String)
 unpackCode (_, [], kvs) defaultLanguage =
@@ -86,6 +128,8 @@ unpackCode (identifier, "sourceCode" : _, kvs) defaultLanguage =
 unpackCode (_, language : _, kvs) _ =
   (unpackAttrs kvs, language)
 ```
+
+Given a list of key/value pairs, return a string suitable for `minted` options.
 
 ```haskell
 unpackAttrs :: [(String, String)] -> String
