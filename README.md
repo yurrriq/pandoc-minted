@@ -1,19 +1,19 @@
 pandoc-minted
 =============
 
-*A pandoc filter to render LaTeX code blocks using minted*
+*A pandoc filter to render  code blocks using minted*
 
 Usage
 -----
 
 ``` fish
-pandoc ... --filter pandoc-minted ...
+pandoc [OPTIONS] --filter pandoc-minted [FILES]
 ```
 
 Source
 ------
 
-As usual, declare a `module Main`...
+As usual, declare a module `Main`...
 
 ```haskell
 module Main where
@@ -25,6 +25,12 @@ module Main where
 
 ```haskell
 import           Data.List           (intercalate)
+```
+
+-   `getArgs` from `System.Environment`,
+
+```haskell
+import           System.Environment  (getArgs)
 ```
 
 -   `topDown` from `Text.Pandoc.Generic`,
@@ -51,17 +57,17 @@ data Minted
   | MintedBlock (String, String) String
 ```
 
-Define a `Show` instance for `Minted`, in order to generate LaTeX code.
+Define a `Show` instance for `Minted`, in order to generate  code.
 
 ```haskell
 instance Show Minted where
   show (MintedInline (attrs, language) contents) =
-    "\\mintinline[" ++ attrs ++ "]{" ++ language ++ "}{" ++ contents ++ "}"
+      "\\mintinline[" ++ attrs ++ "]{" ++ language ++ "}{" ++ contents ++ "}"
   show (MintedBlock (attrs, language) contents) =
-    unlines [ "\\begin{minted}[" ++ attrs ++ "]{" ++ language ++ "}"
-            , contents
-            , "\\end{minted}"
-            ]
+      unlines [ "\\begin" ++ "{minted}[" ++ attrs ++ "]{" ++ language ++ "}"
+              , contents
+              , "\\end" ++ "{minted}"
+              ]
 ```
 
 ### The `main` Function
@@ -72,8 +78,14 @@ Run [`minted`](#minted) as a JSON filter.
 
 ```haskell
 main :: IO ()
-main = toJSONFilter minted
+main = toJSONFilter . go =<< getArgs
+  where
+    go :: [String] -> (Pandoc -> Pandoc)
+    go ["latex"] = minted
+    go _         = id
 ```
+
+### The `minted` Filter
 
 <a name="minted" />
 
@@ -83,23 +95,23 @@ minted = topDown (concatMap mintinline) .
          topDown (concatMap mintedBlock)
 ```
 
-### Handle Inline Code
+#### Handle Inline Code
 
-Transform a `Code` into a `\mintinline` call, otherwise return a given `Inline`.
+Transform `Code` into a `\mintinline` call, otherwise return a given `Inline`.
 
 <a name="mintinline" />
 
 ```haskell
 mintinline :: Inline -> [Inline]
 mintinline (Code attr contents) =
-  let
-    latex = show $ MintedInline (unpackCode attr "text") contents
-  in
-    [ RawInline (Format "latex") latex ]
+    let
+        latex = show $ MintedInline (unpackCode attr "text") contents
+    in
+        [ RawInline (Format "latex") latex ]
 mintinline x = [x]
 ```
 
-### Handle Code Blocks
+#### Handle Code Blocks
 
 Transform a `CodeBlock` into a `minted` environment, otherwise return a given `Block`.
 
@@ -108,10 +120,10 @@ Transform a `CodeBlock` into a `minted` environment, otherwise return a given `B
 ```haskell
 mintedBlock :: Block -> [Block]
 mintedBlock (CodeBlock attr contents) =
-  let
-    latex = show $ MintedBlock (unpackCode attr "text") contents
-  in
-    [ RawBlock (Format "latex") latex ]
+    let
+        latex = show $ MintedBlock (unpackCode attr "text") contents
+    in
+        [ RawBlock (Format "latex") latex ]
 mintedBlock x = [x]
 ```
 
@@ -122,11 +134,13 @@ Given a triplet of `Attr`ibutes (identifier, language(s), and key/value pairs) a
 ```haskell
 unpackCode :: Attr -> String -> (String, String)
 unpackCode (_, [], kvs) defaultLanguage =
-  (unpackAttrs kvs, defaultLanguage)
-unpackCode (identifier, "sourceCode" : _, kvs) defaultLanguage =
-  unpackCode (identifier, ["idris"], kvs) defaultLanguage
+    (unpackAttrs kvs, defaultLanguage)
+unpackCode (identifier, "sourceCode" : "literate" : language : _, kvs) _ =
+    (unpackAttrs kvs, language)
+unpackCode (identifier, "sourceCode" : language : _, kvs) _ =
+    (unpackAttrs kvs, language)
 unpackCode (_, language : _, kvs) _ =
-  (unpackAttrs kvs, language)
+    (unpackAttrs kvs, language)
 ```
 
 Given a list of key/value pairs, return a string suitable for `minted` options.
