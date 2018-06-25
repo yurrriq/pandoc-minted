@@ -1,5 +1,5 @@
 name: pandoc-minted
-version: '0.0.1.0'
+version: '0.0.2.0'
 synopsis: A pandoc filter to render LaTeX code blocks using minted
 category: Text
 author: Eric Bailey
@@ -9,7 +9,7 @@ github: yurrriq/pandoc-minted
 extra-source-files:
 - CHANGELOG.md
 dependencies:
-- base >=4.9 && <4.10
+- base >=4.8 && <5.0
 - pandoc
 - pandoc-types
 executables:

@@ -1,28 +1,90 @@
-{ nixpkgs ? import <nixpkgs> {}, compiler ? "default" }:
+let
+  _nixpkgs =
+    with builtins;
+    ({ owner ? "NixOS", repo ? "nixpkgs", rev, sha256 }:
+     fetchTarball {
+       url = "https://github.com/${owner}/${repo}/archive/${rev}.tar.gz";
+       inherit sha256;
+     }) (fromJSON (readFile ./nixpkgs-src.json));
+in
+
+{ compiler ? "default", doBenchmark ? false, justStaticExecutables ? true }:
+
+with import _nixpkgs rec {
+  config = {
+    packageOverrides = pkgs: {
+      haskellPackages =
+        (if compiler == "default"
+           then pkgs.haskellPackages
+           else pkgs.haskell.packages.${compiler}).override {
+          overrides = hself: hsuper: {
+            pandoc-minted =
+              (if doBenchmark
+                 then pkgs.haskell.lib.doBenchmark
+                 else pkgs.lib.id)
+                 ((if justStaticExecutables
+                     then pkgs.haskell.lib.justStaticExecutables
+                     else pkgs.lib.id)
+                     (hself.callPackage ./src/pandoc-minted.nix {}));
+          };
+        };
+    };
+  };
+};
 
 let
 
-  inherit (nixpkgs) pkgs;
+  FONTCONFIG_FILE = makeFontsConf {
+    fontDirectories = [
+      iosevka
+    ];
+  };
 
-  f = { mkDerivation, base, pandoc, pandoc-types, stdenv }:
-      mkDerivation {
-        pname = "pandoc-minted";
-        version = "0.0.1.0";
-        src = ./.;
-        isLibrary = false;
-        isExecutable = true;
-        executableHaskellDepends = [ base pandoc pandoc-types ];
-        homepage = "https://github.com/yurrriq/pandoc-minted#readme";
-        description = "A pandoc filter to render LaTeX code blocks using minted";
-        license = stdenv.lib.licenses.mit;
-      };
-
-  haskellPackages = if compiler == "default"
-                       then pkgs.haskellPackages
-                       else pkgs.haskell.packages.${compiler};
-
-  drv = haskellPackages.callPackage f {};
+  xelatex = texlive.combine {
+    inherit (texlive)
+      framed
+      fvextra
+      ifplatform
+      latexmk
+      lm-math
+      minted
+      scheme-small
+      xetex
+      xstring;
+  };
 
 in
 
-  if pkgs.lib.inNixShell then drv.env else drv
+stdenv.mkDerivation rec {
+  name = "pandoc-minted-${version}";
+  inherit (haskellPackages.pandoc-minted) version;
+  src = ./src;
+
+  outputs = [ "out" "docs" ];
+
+  buildInputs = [
+    cabal2nix
+    pandoc
+    which
+    xelatex
+  ] ++ (with haskellPackages; [
+    hpack
+    pandoc-minted
+  ]) ++ (with python36Packages; [
+    pygments
+  ]);
+
+  inherit FONTCONFIG_FILE;
+
+  buildFlags = [
+    "pandoc-minted=${haskellPackages.pandoc-minted}/bin/pandoc-minted"
+    "Main.pdf"
+  ];
+
+  installPhase = ''
+    install -Dt $out/bin -m755 ${haskellPackages.pandoc-minted}/bin/pandoc-minted
+    install -Dm644 Main.pdf $docs/${name}.pdf
+  '';
+
+  # TODO: meta
+}

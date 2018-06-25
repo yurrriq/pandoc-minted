@@ -1,9 +1,11 @@
--- This file has been generated from package.yaml by hpack version 0.18.1.
+-- This file has been generated from package.yaml by hpack version 0.21.2.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: e1560935069262514268295c3c1481cf9e49e1154925eba350da6c93cd7581c0
 
 name:           pandoc-minted
-version:        0.0.1.0
+version:        0.0.2.0
 synopsis:       A pandoc filter to render LaTeX code blocks using minted
 category:       Text
 homepage:       https://github.com/yurrriq/pandoc-minted#readme
@@ -24,8 +26,10 @@ source-repository head
 
 executable pandoc-minted
   main-is: Main.lhs
+  other-modules:
+      Paths_pandoc_minted
   build-depends:
-      base >=4.9 && <4.10
+      base >=4.8 && <5.0
     , pandoc
     , pandoc-types
   default-language: Haskell2010
